@@ -1,3 +1,9 @@
+less (444-1ubuntu1pexip1) pexip; urgency=low
+
+  * Prepare Pexip packaging
+
+ -- John-Mark Bell <jmb@pexip.com>  Tue, 24 Dec 2013 21:27:03 +0000
+
 less (444-1ubuntu1) oneiric; urgency=low
 
   * Revert to gzip compression for the package's data tarball.  Packages in
