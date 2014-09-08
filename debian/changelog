@@ -1,3 +1,173 @@
+less (458-3) unstable; urgency=medium
+
+  * debian/control:
+    Priority: important
+    Standards-Version: 3.9.5
+  * debian/postinst: add (after adding the /bin/less alternative):
+    update-alternatives --quiet --remove pager /usr/bin/less
+    This change needs to get into one stable release.
+    Patch by Andreas Beckmann.
+    Closes: #694051.
+  * debian/rules:
+    export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+  * Refresh patches.
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Mon, 08 Sep 2014 05:35:17 +0100
+
+less (458-2) unstable; urgency=low
+
+  * Merge 458-1ubuntu1 
+    - debian/lesspipe{.1}: Make lesspipe treat ddebs the same as it does debs
+      and udebs (LP: #1180013).
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Thu, 06 Jun 2013 09:52:36 +1000
+
+less (458-1ubuntu1) saucy; urgency=low
+
+  * Merge from Debian unstable (LP: #1180013). Remaining changes:
+    - debian/lesspipe{.1}: Make lesspipe treat ddebs the same as it does debs
+      and udebs.
+
+ -- Logan Rosen <logan@ubuntu.com>  Tue, 14 May 2013 21:32:29 -0400
+
+less (458-1) unstable; urgency=low
+
+  [ Anibal Monsalve Salazar ]
+  * New upstream
+    Major differences between version 451 and version 458:
+    - Allow backslash escaping of metacharacters in LESS environment variable if
+      the --use-backslash option is set.
+    - Don't quit if syntax errors are found in command line options.
+    - Increase sizes of some internal buffers.
+    - Fix configure bug with --with-regex=none.
+    - Fix crash with "stty rows 0".
+    - Fix display bug when using up/down arrow on the command line. 
+    Major differences between version 451 and version 457:
+    - Allow backslash escaping of metacharacters in LESS environment variable if
+      the --use-backslash option is set.
+    - Don't quit if syntax errors are found in command line options.
+    - Increase sizes of some internal buffers.
+    - Fix configure bug with --with-regex=none.
+    - Fix crash with "stty rows 0".
+    Revert backslash handling in option string
+    Closes: #695361 
+  * lesspipe: handle *.txz files
+    Patch by Tim Marston
+    Closes: #691981, #691991
+
+  [ Wookey ]
+  * Add Multi-Arch:foreign meta-data to allow cross-dependencies
+    Closes: #693318
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Sat, 11 May 2013 11:50:06 +1000
+
+less (456-1ubuntu2) saucy; urgency=low
+
+  * Make lesspipe treat ddebs the same as it does debs and udebs.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Wed, 08 May 2013 17:18:44 -0600
+
+less (456-1ubuntu1) raring; urgency=low
+
+  * Add Multi-Arch: foreign meta-data to allow cross-dependencies
+    (LP: #1081611).
+
+ -- Wookey <wookey@wookware.org>  Thu, 22 Nov 2012 13:09:54 +0000
+
+less (456-1) unstable; urgency=low
+
+  * New upstream
+    Upload to unstable
+    Major differences between version 451 and version 456:
+    - Allow backslash escaping of metacharacters in LESS environment variable.
+    - Don't quit if syntax errors are found in command line options.
+    - Increase sizes of some internal buffers.
+    - Fix configure bug with --with-regex=none.
+    - Fix crash with "stty rows 0".
+  * man: fix 'There is no -l option ("less --help" for help)'
+    Closes: #692834
+  * Standards version is 3.9.4
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Mon, 12 Nov 2012 12:30:57 +1100
+
+less (455-1) experimental; urgency=low
+
+  * New upstream
+    Major differences between version 451 and version 455:
+    - Allow backslash escaping of metacharacters in LESS environment variable.
+    - Don't quit if syntax errors are found in command line options.
+    - Increase sizes of some internal buffers.
+    - Fix configure bug with --with-regex=none.
+    - Fix crash with "stty rows 0".
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Thu, 08 Nov 2012 09:35:11 +1100
+
+less (451-1) unstable; urgency=low
+
+  * New upstream
+    Major changes between versions 444 and 451:
+    - Add ESC-F command to keep reading data until a pattern is found.
+    - Use exit code of LESSOPEN script if LESSOPEN starts with "||".
+    - When up/down arrow is used on the command line immediately after
+      typing text, the next command starting with that text is found.
+    - Add support for GNU regex.
+    - Add configure option --with-regex=none and fix compile errors
+      when compiling with no regex library.
+    - Fix possible crashes caused by malformed LESSOPEN or LESSCLOSE
+      variables.
+    - Fix bug highlighting text which is discontiguous in the file due
+      to backspace processing.
+    - Fix bug in displaying status column when scrolling backwards with
+      -J and -S in effect. 
+  * Merge 444-4ubuntu1
+    - Revert to gzip compression for the package's data tarball.
+  * Standards version is 3.9.4
+  * Configure less with --with-regex=gnu
+    Closes: #656694
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Mon, 15 Oct 2012 13:59:50 +1100
+
+less (444-4ubuntu1) quantal; urgency=low
+
+  * Resynchronise with Debian.  Remaining changes:
+    - Revert to gzip compression for the package's data tarball.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 11 Jun 2012 14:05:09 +0100
+
+less (444-4) unstable; urgency=low
+
+  * Fix typo with CFLAGS in debian/rules
+    Patch by Simon Ruderich
+    Closes: #676909
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Mon, 11 Jun 2012 00:07:28 +1000
+
+less (444-3) unstable; urgency=low
+
+  * Standards version is 3.9.3
+  * DH compatibility level is 9
+  * Use hardening options
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Sat, 09 Jun 2012 20:36:51 +1000
+
+less (444-2ubuntu1) quantal; urgency=low
+
+  * Resynchronise with Debian.  Remaining changes:
+    - Revert to gzip compression for the package's data tarball.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 22 May 2012 14:18:37 +0100
+
+less (444-2) unstable; urgency=low
+
+  * More can also go backwards! 
+    Add 02-655926-more_can_go_backwards.patch
+    Closes: 655926
+  * Add support for *.xz and *.tar.xz
+    Patch by Darren Salt
+    Closes: 572228
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Tue, 31 Jan 2012 14:43:42 +1100
+
 less (444-1ubuntu1) oneiric; urgency=low
 
   * Revert to gzip compression for the package's data tarball.  Packages in

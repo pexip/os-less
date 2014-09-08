@@ -28,6 +28,10 @@ case "$1" in
 	    /bin/less 77 --slave /usr/share/man/man1/pager.1.gz \
 	    pager.1.gz /usr/share/man/man1/less.1.gz
 
+      # This change needs to get into one stable release.
+      # See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=694051
+        update-alternatives --quiet --remove pager /usr/bin/less
+
       # Purge the debconf database we no longer need.
       if [ -e /usr/share/debconf/confmodule ]; then
         . /usr/share/debconf/confmodule
