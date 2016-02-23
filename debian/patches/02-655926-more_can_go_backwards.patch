@@ -1,12 +1,12 @@
 http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=655926
 
-Index: less-458/less.nro
+Index: less-481/less.nro
 ===================================================================
---- less-458.orig/less.nro
-+++ less-458/less.nro
+--- less-481.orig/less.nro
++++ less-481/less.nro
 @@ -26,10 +26,8 @@ less \- opposite of more
  .I Less
- is a program similar to 
+ is a program similar to
  .I more
 -(1), but which allows backward movement
 -in the file as well as forward movement.

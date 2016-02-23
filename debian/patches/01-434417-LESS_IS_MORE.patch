@@ -2,11 +2,11 @@ http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=434417
 
 Patch by Jim Paris <jim@jtan.com>
 
-Index: less-458/main.c
+Index: less-481/main.c
 ===================================================================
---- less-458.orig/main.c
-+++ less-458/main.c
-@@ -128,7 +128,7 @@ main(argc, argv)
+--- less-481.orig/main.c
++++ less-481/main.c
+@@ -127,7 +127,7 @@ main(argc, argv)
  		if (s[-1] == PATHNAME_SEP[0])
  			break;
  	}
@@ -15,10 +15,10 @@ Index: less-458/main.c
  		less_is_more = 1;
  
  	init_prompt();
-Index: less-458/opttbl.c
+Index: less-481/opttbl.c
 ===================================================================
---- less-458.orig/opttbl.c
-+++ less-458/opttbl.c
+--- less-481.orig/opttbl.c
++++ less-481/opttbl.c
 @@ -470,7 +470,7 @@ init_option()
  	char *p;
  
