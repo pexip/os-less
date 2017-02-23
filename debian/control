@@ -7,7 +7,7 @@ XSBC-Original-Maintainer: Anibal Monsalve Salazar <anibal@debian.org>
 Build-Depends: debhelper (>= 7), libncurses-dev
 Standards-Version: 3.9.2
 Homepage: http://www.greenwoodsoftware.com/less/
-XS-Pexip-Upstream: http://archive.ubuntu.com/ubuntu/ precise
+XS-Pexip-Upstream: http://ftp.debian.org/debian/ jessie
 
 Package: less
 Architecture: any
