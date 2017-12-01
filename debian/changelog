@@ -1,3 +1,18 @@
+less (487-0.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * New upstream version. Closes: #848336, #843541.
+  * Build depend on libncursesw5-dev.
+  * debian/lesspipe:
+    - Add snap support (Adam Collard).
+    - Fix typo that broke ddeb support (Adam Conrad). Closes: #832121.
+    - Add Support for .whl and .egg files (John T. Wodder). Closes: #862048.
+  * debian/patches/lp-1562308-fix_mkutable.patch:
+    - Fix east asian width problem (Mitsuya Shibata).
+  * CVE-2014-9488 fixed upstream in 475. Closes: #780247.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 01 Dec 2017 05:11:09 +0100
+
 less (481-2.1) unstable; urgency=medium
 
   * Non-maintainer upload.
