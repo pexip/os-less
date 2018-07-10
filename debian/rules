@@ -56,11 +56,6 @@ install: build
 	$(MAKE) install prefix=`pwd`/debian/`dh_listpackages`/
 	install -m 0755 debian/lesspipe `pwd`/debian/`dh_listpackages`/bin/lesspipe
 	ln -s lesspipe `pwd`/debian/`dh_listpackages`/bin/lessfile
-	ln -s /bin/lesspipe `pwd`/debian/`dh_listpackages`/usr/bin/lessfile
-	ln -s /bin/lesspipe `pwd`/debian/`dh_listpackages`/usr/bin/lesspipe
-	ln -s /bin/lesskey `pwd`/debian/`dh_listpackages`/usr/bin/lesskey
-	ln -s /bin/lessecho `pwd`/debian/`dh_listpackages`/usr/bin/lessecho
-	ln -s /bin/less `pwd`/debian/`dh_listpackages`/usr/bin/less
 	ln -s lesspipe.1.gz `pwd`/debian/`dh_listpackages`/usr/share/man/man1/lessfile.1.gz
 
 binary-indep: build install
