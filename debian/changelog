@@ -1,3 +1,9 @@
+less (487-0.1pexip1) pexip; urgency=medium
+
+  * Migrate to Buster
+
+ -- Vincent Sanders <vince@pexip.com>  Fri, 28 Feb 2020 22:56:00 +0000
+
 less (487-0.1) unstable; urgency=medium
 
   * Non-maintainer upload.
