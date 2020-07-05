@@ -48,10 +48,10 @@ if [ $# -eq 1 ] ; then
 	# generate filename for possible use by lesspipe
 	umask 077
 	if [ $BASENAME = $LESSFILE ]; then
-		TMPFILE=`tempfile -d $TMPDIR -p lessf`
+		TMPFILE=`mktemp -p $TMPDIR lessfXXXXXX`
 		if [ -z "$TMPFILE" ]; then
-			echo >&2 "Could not find essential program 'tempfile'. Exiting"
-      exit 1
+			echo >&2 "TMPFILE variable is empty. Exiting"
+		exit 1
 		fi
 	fi
 

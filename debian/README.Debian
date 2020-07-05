@@ -1,5 +1,5 @@
 
-- If you want to view Chinese text and see garbage on the screen, you can try
+- When you try to view Chinese text and see garbage on the screen, try
   to set the environment variable "LESSCHARSET" to "utf-8" before running
   less, e.g. "export LESSCHARSET=utf-8" or "setenv LESSCHARSET utf8" for
   c-shells.

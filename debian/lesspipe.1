@@ -68,6 +68,7 @@ This is a list of currently supported extensions
   *.bz2
   *.deb, *.udeb, *.ddeb
   *.doc
+  *.egg
   *.gif, *.jpeg, *.jpg, *.pcd, *.png, *.tga, *.tiff, *.tif
   *.iso, *.raw, *.bin
   *.lha, *.lzh
@@ -81,6 +82,7 @@ This is a list of currently supported extensions
   *.gz, *.z, *.dz
   *.tar
   *.tar.xz, *.xz
+  *.whl
   *.jar, *.war, *.xpi, *.zip
   *.zoo
 .DE
@@ -126,20 +128,6 @@ Here is an example script:
 Executable file that can do user defined processing. See section USER DEFINED
 FILTERS for more information.
 .SH BUGS
-When trying to open compressed 0 byte files,
-.I less
-displays the actual binary file contents. This is not a bug.
-.I less
-is designed to do that (see manual page less(1), section INPUT PREPROCESSOR).
-This is the answer of Mark Nudelman <markn@greenwoodsoftware.com>:
-.IP
-"I recognized when I designed it that a
-lesspipe filter cannot output an empty file and have less display
-nothing in that case; it's a side effect of using the "no output" case
-to mean "the filter has nothing to do".  It could have been designed to
-have some other mechanism to indicate "nothing to do", but "no output"
-seemed the simplest and most intuitive for lesspipe writers."
-
 .PP
 Sometimes, less does not display the contents file you want to view but output
 that is produced by your login scripts (~/.bashrc or ~/.bash_profile). This
