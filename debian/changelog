@@ -1,3 +1,9 @@
+less (487-0.1+b1pexip2) pexip; urgency=medium
+
+  * Rebuild in buster environment
+
+ -- Steve McIntyre <steve.mcintyre@pexip.com>  Wed, 15 Jul 2020 23:00:41 +0000
+
 less (487-0.1+b1pexip1) pexip; urgency=medium
 
   * Migrate to Buster
