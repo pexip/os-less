@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2016  Mark Nudelman
+ * Copyright (C) 1984-2019  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -15,6 +15,9 @@
 #include "less.h"
 #if MSDOS_COMPILER==WIN32C
 #include "windows.h"
+#ifndef COMMON_LVB_UNDERSCORE
+#define COMMON_LVB_UNDERSCORE 0x8000
+#endif
 #endif
 
 public int errmsgs;	/* Count of messages displayed by error() */
@@ -38,16 +41,19 @@ extern int ul_fg_color, ul_bg_color;
 extern int so_fg_color, so_bg_color;
 extern int bl_fg_color, bl_bg_color;
 extern int sgr_mode;
+#if MSDOS_COMPILER==WIN32C
+extern int have_ul;
+#endif
 #endif
 
 /*
  * Display the line which is in the line buffer.
  */
 	public void
-put_line()
+put_line(VOID_PARAM)
 {
-	register int c;
-	register int i;
+	int c;
+	int i;
 	int a;
 
 	if (ABORT_SIGS())
@@ -94,10 +100,10 @@ static char *ob = obuf;
  * overwritten or scrolled away.
  */
 	public void
-flush()
+flush(VOID_PARAM)
 {
-	register int n;
-	register int fd;
+	int n;
+	int fd;
 
 	n = (int) (ob - obuf);
 	if (n == 0)
@@ -127,9 +133,9 @@ flush()
 			 * the -D command-line option.
 			 */
 			char *anchor, *p, *p_next;
-			static unsigned char fg, fgi, bg, bgi;
-			static unsigned char at;
-			unsigned char f, b;
+			static int fg, fgi, bg, bgi;
+			static int at;
+			int f, b;
 #if MSDOS_COMPILER==WIN32C
 			/* Screen colors used by 3x and 4x SGR commands. */
 			static unsigned char screen_color[] = {
@@ -259,8 +265,13 @@ flush()
 						case 7: /* inverse on */
 							at |= 2;
 							break;
-						case 4:	/* underline on */
-							bgi = 8;
+						case 4: /* underline on */
+#if MSDOS_COMPILER==WIN32C
+							if (have_ul)
+								bgi = COMMON_LVB_UNDERSCORE >> 4;
+							else
+#endif
+								bgi = 8;
 							at |= 4;
 							break;
 						case 5: /* slow blink on */
@@ -356,7 +367,11 @@ flush()
 					if (at & 16)
 						f = b ^ 8;
 					f &= 0xf;
-					b &= 0xf;
+#if MSDOS_COMPILER==WIN32C
+					b &= 0xf | (COMMON_LVB_UNDERSCORE >> 4);
+#else
+ 					b &= 0xf;
+#endif
 					WIN32setcolors(f, b);
 					p_next = anchor = p + 1;
 				} else
@@ -436,7 +451,7 @@ putchr(c)
  */
 	public void
 putstr(s)
-	register char *s;
+	constant char *s;
 {
 	while (*s != '\0')
 		putchr(*s++);
@@ -453,7 +468,7 @@ void funcname(num, buf) \
 { \
 	int neg = (num < 0); \
 	char tbuf[INT_STRLEN_BOUND(num)+2]; \
-	register char *s = tbuf + sizeof(tbuf); \
+	char *s = tbuf + sizeof(tbuf); \
 	if (neg) num = -num; \
 	*--s = '\0'; \
 	do { \
@@ -466,6 +481,27 @@ void funcname(num, buf) \
 TYPE_TO_A_FUNC(postoa, POSITION)
 TYPE_TO_A_FUNC(linenumtoa, LINENUM)
 TYPE_TO_A_FUNC(inttoa, int)
+
+/*
+ * Convert an string to an integral type.
+ */
+#define STR_TO_TYPE_FUNC(funcname, type) \
+type funcname(buf, ebuf) \
+	char *buf; \
+	char **ebuf; \
+{ \
+	type val = 0; \
+	for (;;) { \
+		char c = *buf++; \
+		if (c < '0' || c > '9') break; \
+		val = 10 * val + c - '0'; \
+	} \
+	if (ebuf != NULL) *ebuf = buf; \
+	return val; \
+}
+
+STR_TO_TYPE_FUNC(lstrtopos, POSITION);
+STR_TO_TYPE_FUNC(lstrtoi, int);
 
 /*
  * Output an integer in a given radix.
@@ -501,11 +537,11 @@ iprint_linenum(num)
  */
 	static int
 less_printf(fmt, parg)
-	register char *fmt;
+	char *fmt;
 	PARG *parg;
 {
-	register char *s;
-	register int col;
+	char *s;
+	int col;
 
 	col = 0;
 	while (*fmt != '\0')
@@ -536,6 +572,9 @@ less_printf(fmt, parg)
 				col += iprint_linenum(parg->p_linenum);
 				parg++;
 				break;
+			case '%':
+				putchr('%');
+				break;
 			}
 		}
 	}
@@ -548,7 +587,7 @@ less_printf(fmt, parg)
  * become the next command.
  */
 	public void
-get_return()
+get_return(VOID_PARAM)
 {
 	int c;
 
@@ -600,7 +639,7 @@ error(fmt, parg)
 
 	get_return();
 	lower_left();
-    clear_eol();
+	clear_eol();
 
 	if (col >= sc_width)
 		/*
@@ -645,7 +684,7 @@ query(fmt, parg)
 	char *fmt;
 	PARG *parg;
 {
-	register int c;
+	int c;
 	int col = 0;
 
 	if (any_display && is_tty)
