@@ -1,3 +1,35 @@
+less (551-2) sid; urgency=medium
+
+  * remove /bin/less pager alternative before upgrade
+    (closes: #962590) (lp: #1874953)
+  * debian/lesspipe: use mktemp instead of tempfile (closes: #961690)
+  * do not install empty /bin/ directory
+  * remove unsafe mime mailcap placeholder entry quotes
+  * set standards version to 4.5.0
+
+ -- Milan Kupcevic <milan@debian.org>  Sun, 05 Jul 2020 19:36:33 -0400
+
+less (551-1) sid; urgency=low
+
+  * many thanks to Anibal Monsalve Salazar for a decade worth of contributions
+    to this package
+  * new maintainer (closes: #925018)
+  * new upstream release (closes: #925008, #892879, #178276, #473227, #922185,
+    #839103, #626348, #330241, #914197, #707824)
+    - don't count lines in initial screen if using -X with -F (closes: #906261)
+    - update unicode tables to 2017-03-08 (closes: #597918, #881350)
+    - mark truncated lines with a special character (closes: #547257)
+  * set standards version to 4.4.0
+  * set debhelper compatibility to 12
+  * build depend on libncurses-dev
+  * add VCS repository URLs
+  * gbp import pristine-tar
+  * move binaries back to /usr/bin (closes: #500092)
+  * update less-is-more patch
+  * update lesspipe man page (lp: #1839533)
+
+ -- Milan Kupcevic <milan@debian.org>  Sat, 14 Sep 2019 22:28:16 -0400
+
 less (487-0.1+b1pexip2) pexip; urgency=medium
 
   * Rebuild in buster environment
