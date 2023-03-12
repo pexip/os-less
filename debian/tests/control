@@ -1,0 +1,2 @@
+Test-Command: less --help
+Depends: less

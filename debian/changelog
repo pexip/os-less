@@ -1,3 +1,47 @@
+less (590-2) sid; urgency=medium
+
+  * d/control: set standards version to 4.6.2
+  * d/watch, d/upstream/signing-key.asc: check upstream release signature
+  * d/tests/control: add autopkgtest
+  * clarify CVE-2022-46663 patch upstream status
+
+ -- Milan Kupcevic <milan@debian.org>  Sun, 12 Mar 2023 12:18:18 -0400
+
+less (590-1.2) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * End OSC8 hyperlink on invalid embedded escape sequence (CVE-2022-46663)
+    (Closes: #1030825)
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Sun, 12 Feb 2023 11:17:35 +0100
+
+less (590-1.1) sid; urgency=medium
+
+  * Non-maintainer upload
+  * d/copyright: Convert to machine-readable format (closes: #1019289)
+
+ -- Bastian Germann <bage@debian.org>  Wed, 21 Dec 2022 13:27:37 +0100
+
+less (590-1) sid; urgency=low
+
+  [ Milan Kupcevic ]
+  * new upstream release (closes: #983599, #995984)
+    - avoid spurious empty lines (closes: #763631)
+    - remove erroneous free() (closes: #990035)
+  * debian/lesspipe.1: list zstd related file types
+  * debian/lesspipe: redo lessfilter handling
+    (closes: #788438, #992354)(lp: #1915568)
+  * debian/lesspipe: safeguard from possible improper delete
+    (closes: #1002301)
+  * refresh quilt patches
+  * update copyright notice
+  * set standards version to 4.6.0
+
+  [ Adam Borowski ]
+  * lesspipe: support zstd-compressed files (closes: #964930)
+
+ -- Milan Kupcevic <milan@debian.org>  Thu, 30 Dec 2021 01:54:19 -0500
+
 less (551-2) sid; urgency=medium
 
   * remove /bin/less pager alternative before upgrade

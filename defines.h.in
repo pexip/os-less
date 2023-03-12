@@ -80,7 +80,7 @@
  * PIPEC is 1 if you wish to have the "|" command
  * which allows the user to pipe data into a shell command.
  */
-#define	PIPEC		(!SECURE)
+#define	PIPEC		(!SECURE && HAVE_POPEN)
 
 /*
  * LOGFILE is 1 if you wish to allow the -o option (to create log files).
@@ -112,6 +112,7 @@
 #define	LESSKEYFILE		".less"
 #define	LESSKEYFILE_SYS		SYSDIR "/sysless"
 #define	DEF_LESSKEYINFILE	".lesskey"
+#define	LESSKEYINFILE_SYS	SYSDIR "/syslesskey"
 #define LESSHISTFILE		".lesshst"
 
 
@@ -183,6 +184,9 @@
 
 /* Define to 1 if you have the strstr() function. */
 #define HAVE_STRSTR 1
+
+/* Define to 1 to support reading lesskey source files (not just binary). */
+#define HAVE_LESSKEYSRC 1
 
 /*
  * Sizes of various buffers.
@@ -257,6 +261,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define to 1 if you have the `nanosleep' function. */
+#undef HAVE_NANOSLEEP
+
 /* Define HAVE_OSPEED if your termcap library has the ospeed variable. */
 #undef HAVE_OSPEED
 
@@ -265,6 +272,9 @@
 
 /* PCRE2 (Perl-compatible regular expression) library */
 #undef HAVE_PCRE2
+
+/* Define to 1 if you have the `poll' function. */
+#undef HAVE_POLL
 
 /* Define to 1 if you have the `popen' function. */
 #undef HAVE_POPEN
@@ -359,11 +369,17 @@
 /* Define HAVE_TIME_T if your system supports the "time_t" type. */
 #undef HAVE_TIME_T
 
+/* Define to 1 if you have the `ttyname' function. */
+#undef HAVE_TTYNAME
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
 /* Define HAVE_UPPER_LOWER if you have isupper, islower, toupper, tolower. */
 #undef HAVE_UPPER_LOWER
+
+/* Define to 1 if you have the `usleep' function. */
+#undef HAVE_USLEEP
 
 /* Henry Spencer V8 regcomp() and regexp.h */
 #undef HAVE_V8_REGCOMP
