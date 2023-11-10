@@ -24,6 +24,7 @@ AC_SYS_LARGEFILE
 
 # Checks for general libraries.
 AC_CHECK_LIB(tinfo, tgoto, [have_tinfo=yes], [have_tinfo=no])
+AC_CHECK_LIB(tinfow, tgoto, [have_tinfow=yes], [have_tinfow=no])
 AC_CHECK_LIB(xcurses, initscr, [have_xcurses=yes], [have_xcurses=no])
 AC_CHECK_LIB(ncursesw, initscr, [have_ncursesw=yes], [have_ncursesw=no])
 AC_CHECK_LIB(ncurses, initscr, [have_ncurses=yes], [have_ncurses=no])
@@ -55,6 +56,19 @@ if test $curses_broken = 0; then
 if test "x$TERMLIBS" = x; then
   if test $have_tinfo = yes; then
     TERMLIBS="-ltinfo"
+    SAVE_LIBS=$LIBS
+    LIBS="$LIBS $TERMLIBS"
+    AC_TRY_LINK(, [tgetent(0,0); tgetflag(0); tgetnum(0); tgetstr(0,0);],
+      [termok=yes], [termok=no])
+    LIBS=$SAVE_LIBS
+    if test $termok = no; then TERMLIBS=""; fi
+  fi
+fi
+
+# -- Try tinfow.
+if test "x$TERMLIBS" = x; then
+  if test $have_tinfow = yes; then
+    TERMLIBS="-ltinfow"
     SAVE_LIBS=$LIBS
     LIBS="$LIBS $TERMLIBS"
     AC_TRY_LINK(, [tgetent(0,0); tgetflag(0); tgetnum(0); tgetstr(0,0);],
@@ -96,7 +110,7 @@ if test "x$TERMLIBS" = x; then
     TERMLIBS="-lncurses"
     SAVE_LIBS=$LIBS
     LIBS="$LIBS $TERMLIBS"
-    AC_TRY_LINK(, [tgetent(0,0); tgetflag(0); tgetnum(0); tgetstr(0,0);],
+    AC_TRY_LINK([#include <termcap.h>], [tgetent(0,0); tgetflag(0); tgetnum(0); tgetstr(0,0);],
       [termok=yes], [termok=no])
     LIBS=$SAVE_LIBS
     if test $termok = no; then TERMLIBS=""; fi
@@ -260,7 +274,7 @@ AC_TRY_COMPILE([], [int f(int a) { return a; }],
 
 # Checks for library functions.
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS([fsync popen _setjmp sigprocmask sigsetmask snprintf stat system fchmod realpath])
+AC_CHECK_FUNCS([fchmod fsync nanosleep poll popen realpath _setjmp sigprocmask sigsetmask snprintf stat system ttyname usleep])
 
 # AC_CHECK_FUNCS may not work for inline functions, so test these separately.
 AC_MSG_CHECKING(for memcpy)
@@ -373,7 +387,9 @@ fi
 # Compile in secure mode?
 AC_ARG_WITH(secure,
   [  --with-secure           Compile in secure mode],
-  AC_DEFINE(SECURE_COMPILE, 1), AC_DEFINE(SECURE_COMPILE, 0))
+  AC_DEFINE(SECURE_COMPILE, 1)
+  AC_SUBST(SECURE_COMPILE,1), AC_DEFINE(SECURE_COMPILE, 0)
+  AC_SUBST(SECURE_COMPILE,0))
 
 # Should we use floating point?
 AC_MSG_CHECKING(for floating point)
@@ -581,7 +597,7 @@ AH_TOP([
  * PIPEC is 1 if you wish to have the "|" command
  * which allows the user to pipe data into a shell command.
  */
-#define	PIPEC		(!SECURE)
+#define	PIPEC		(!SECURE && HAVE_POPEN)
 
 /*
  * LOGFILE is 1 if you wish to allow the -o option (to create log files).
@@ -613,6 +629,7 @@ AH_TOP([
 #define	LESSKEYFILE		".less"
 #define	LESSKEYFILE_SYS		SYSDIR "/sysless"
 #define	DEF_LESSKEYINFILE	".lesskey"
+#define	LESSKEYINFILE_SYS	SYSDIR "/syslesskey"
 #define LESSHISTFILE		".lesshst"
 
 
@@ -684,6 +701,9 @@ AH_TOP([
 
 /* Define to 1 if you have the strstr() function. */
 #define HAVE_STRSTR 1
+
+/* Define to 1 to support reading lesskey source files (not just binary). */
+#define HAVE_LESSKEYSRC 1
 
 /*
  * Sizes of various buffers.
