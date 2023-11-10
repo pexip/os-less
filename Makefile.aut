@@ -1,12 +1,21 @@
 # Makefile for authoring less.
 
 EMAIL = bug-less@gnu.org
-HOMEPAGE = http://www.greenwoodsoftware.com/less
+HOMEPAGE = https://greenwoodsoftware.com/less
 SHELL = /bin/sh
 GIT = git
-NROFF = nroff -man
+NROFF = nroff -t -man
 
 srcdir = .
+REL := $(shell sed -e '/char version/!d' -e 's/[^0-9.]*\([0-9.]*\).*/\1/' -e q ${srcdir}/version.c)
+
+ifeq ($(USE_PYTHON),1)
+	MKHELP = mkhelp.py
+	MKFUNCS = mkfuncs.py
+else
+	MKHELP = mkhelp.pl
+	MKFUNCS = mkfuncs.pl
+endif
 
 SRC = \
 	main.c screen.c brac.c ch.c charset.c cmdbuf.c \
@@ -14,31 +23,33 @@ SRC = \
 	help.c ifile.c input.c jump.c line.c linenum.c \
 	lsystem.c mark.c optfunc.c option.c opttbl.c os.c \
 	output.c pattern.c position.c prompt.c search.c signal.c \
-	tags.c ttyin.c version.c
+	tags.c ttyin.c version.c xbuf.c
 DISTFILES_W = \
 	defines.ds  Makefile.dsb Makefile.dsg Makefile.dsu \
 	defines.o2  Makefile.o2e \
 	defines.o9  Makefile.o9c Makefile.o9u \
-	defines.wn  Makefile.wnm Makefile.wnb \
+	defines.wn  Makefile.wnm Makefile.wnb Makefile.wng \
 	configure 
 UNICODE_FILES = \
 	compose.uni fmt.uni ubin.uni wide.uni
 DISTFILES = \
 	${SRC} regexp.c regexp.h \
 	COPYING INSTALL LICENSE Makefile.in Makefile.aut NEWS README \
-	configure.ac lesskey.c lessecho.c scrsize.c \
+	configure.ac lesskey.c lesskey_parse.c lessecho.c scrsize.c \
 	charset.h cmd.h funcs.h lglob.h less.h lesskey.h option.h \
-	pckeys.h pattern.h position.h \
+	pckeys.h pattern.h position.h xbuf.h \
 	install.sh defines.h.in mkinstalldirs \
 	less.nro less.man lesskey.nro lesskey.man lessecho.nro lessecho.man \
 	less.hlp \
 	mkfuncs.pl mkhelp.pl \
+	mkfuncs.py mkhelp.py \
 	mkutable $(UNICODE_FILES) \
 	${DISTFILES_W}
 
 all: help.c funcs.h $(UNICODE_FILES) ${srcdir}/configure 
 
 release: .FORCE
+	@if grep -s 'Major changes between .*${REL}' NEWS ; then :; else echo '*** NEWS is not updated for ${REL}'; exit 1; fi
 	${MAKE} -f Makefile.aut tagall 
 	${MAKE} -f Makefile.aut all 
 	${MAKE} -f Makefile.aut clean 
@@ -49,16 +60,15 @@ release: .FORCE
 help.c: less.hlp 
 	-mv -f ${srcdir}/help.c ${srcdir}/help.c.old
 	rm -rf help.c
-	${srcdir}/mkhelp.pl < less.hlp > help.c
+	${srcdir}/${MKHELP} < less.hlp > help.c
 	if cmp -s help.c help.c.old; then mv -f help.c.old help.c; fi
 
-${srcdir}/configure: ${srcdir}/configure.ac \
-		${srcdir}/Makefile.in
+${srcdir}/configure ${srcdir}/defines.h.in: ${srcdir}/configure.ac ${srcdir}/Makefile.in
 	cd ${srcdir}; autoheader; autoconf
 
 funcs.h: ${SRC:%=${srcdir}/%}
 	-mv -f ${srcdir}/funcs.h ${srcdir}/funcs.h.old
-	perl ${srcdir}/mkfuncs.pl ${SRC:%=${srcdir}/%} >${srcdir}/funcs.h
+	${srcdir}/${MKFUNCS} ${SRC:%=${srcdir}/%} >${srcdir}/funcs.h
 	if cmp -s funcs.h funcs.h.old; then mv -f funcs.h.old funcs.h; fi
 
 lint:
@@ -66,35 +76,26 @@ lint:
 
 clean: 
 	rm -f Makefile config.status config.log config.cache defines.h stamp-h \
-		README NEWS \
+		configure defines.h.in funcs.h help.c \
 		less.nro less.man lesskey.nro lesskey.man lessecho.nro lessecho.man 
 
 distclean: clean
 realclean: clean
 
 REPLACE_VERSION = \
-	@REL=`sed -e '/char version/!d' -e 's/[^0-9.]*\([0-9.]*\).*/\1/' -e q ${srcdir}/version.c`; \
 	DT=`date '+%d %h %Y'`; \
-	echo "Stuffing version number $$REL into $@"; \
+	echo "Stuffing version number ${REL} into $@"; \
 	rm -f $@; \
 	sed \
-		-e "s;@@VERSION@@;$$REL;" \
-		-e "s;@@DATE@@;$$DT;" \
-		-e "s;@@EMAIL@@;${EMAIL};" \
-		-e "s;@@HOMEPAGE@@;${HOMEPAGE};" >$@
+		-e "s;@@VERSION@@;${REL};" \
+		-e "s;@@DATE@@;$$DT;" >$@
 
-${srcdir}/README: ${srcdir}/README.VER ${srcdir}/version.c
-	${REPLACE_VERSION} ${srcdir}/README.VER
-${srcdir}/NEWS: ${srcdir}/NEWS.VER ${srcdir}/version.c
-	${REPLACE_VERSION} ${srcdir}/NEWS.VER
 ${srcdir}/less.nro: ${srcdir}/less.nro.VER ${srcdir}/version.c
 	${REPLACE_VERSION} ${srcdir}/less.nro.VER
 ${srcdir}/lesskey.nro: ${srcdir}/lesskey.nro.VER ${srcdir}/version.c
 	${REPLACE_VERSION} ${srcdir}/lesskey.nro.VER
 ${srcdir}/lessecho.nro: ${srcdir}/lessecho.nro.VER ${srcdir}/version.c
 	${REPLACE_VERSION} ${srcdir}/lessecho.nro.VER
-${srcdir}/less.hlp: ${srcdir}/less.hlp.VER ${srcdir}/version.c
-	${REPLACE_VERSION} ${srcdir}/less.hlp.VER
 
 ${srcdir}/less.man: ${srcdir}/less.nro
 	${NROFF} ${srcdir}/less.nro >${srcdir}/less.man
@@ -114,34 +115,43 @@ wide.uni: unicode/EastAsianWidth.txt
 
 unicode/UnicodeData.txt:
 	mkdir -p unicode
-	curl -s -o $@ ftp://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt
+	curl -s -u 'anonymous:${EMAIL}' -o $@ ftp://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt
 unicode/EastAsianWidth.txt:
 	mkdir -p unicode
-	curl -s -o $@ ftp://ftp.unicode.org/Public/UNIDATA/EastAsianWidth.txt
+	curl -s -u 'anonymous:${EMAIL}' -o $@ ftp://ftp.unicode.org/Public/UNIDATA/EastAsianWidth.txt
 
 distfiles: ${DISTFILES}
 
+echo_distfiles: 
+	echo ${DISTFILES}
+
 dist: ${DISTFILES}
 	if [ ! -d ${srcdir}/release ]; then mkdir ${srcdir}/release; fi
-	@cd ${srcdir}; \
-	REL=`sed -e '/char version/!d' -e 's/[^0-9.]*\([0-9.]*\).*/less-\1/' -e q version.c`; \
-	rm -rf release/$$REL; mkdir release/$$REL; \
-	echo "Preparing $$REL"; \
-	rm -rf $$REL; mkdir $$REL; \
-	for file in ${DISTFILES}; do \
-	  ./add_copyright $$file $$REL; \
-	done; \
-	cd $$REL; chmod -w *; chmod +w ${DISTFILES_W}; chmod +x configure; cd ..; \
-	echo "Creating release/$$REL/$$REL.tar.gz"; \
-	tar -cf - $$REL | gzip -c >release/$$REL/$$REL.tar.gz; \
-	echo "Signing release/$$REL/$$REL.tar.gz"; \
-	gpg --detach-sign release/$$REL/$$REL.tar.gz; \
-	mv release/$$REL/$$REL.tar.gz.sig release/$$REL/$$REL.sig; \
-	echo "Creating release/$$REL/$$REL.zip"; \
-	zip -rq release/$$REL/$$REL.zip $$REL; \
-	rm -rf $$REL
+	@LESSREL=less-${REL} && RELDIR=release/$$LESSREL && \
+	cd ${srcdir} && \
+	rm -rf $$RELDIR && mkdir $$RELDIR && \
+	echo "Preparing $$LESSREL" && \
+	rm -rf $$LESSREL && mkdir $$LESSREL && \
+	cp ${DISTFILES} $$LESSREL && \
+	cd $$LESSREL && chmod -w * && chmod +w ${DISTFILES_W} && chmod +x configure && cd .. && \
+	echo "Creating $$RELDIR/${REL}.tar.gz" && \
+	tar -cf - $$LESSREL | gzip -c >$$RELDIR/$$LESSREL.tar.gz && \
+	echo "Signing $$RELDIR/$$LESSREL.tar.gz" && \
+	gpg --detach-sign $$RELDIR/$$LESSREL.tar.gz && \
+	mv $$RELDIR/$$LESSREL.tar.gz.sig $$RELDIR/$$LESSREL.sig && \
+	echo "Creating $$RELDIR/$$LESSREL.zip" && \
+	zip -rq $$RELDIR/$$LESSREL.zip $$LESSREL && \
+	rm -rf $$LESSREL
 
 tagall:
-	@REL=`sed -e '/char version/!d' -e 's/[^0-9.]*\([0-9.]*\).*/v\1/' -e q ${srcdir}/version.c`; \
-	echo "tagging $$REL"; \
-	$(GIT) tag -a -f -m "$$REL" "$$REL"
+	echo "tagging v${REL}"; \
+	$(GIT) tag -a -f -m "v${REL}" "v${REL}"
+
+gnu_upload:
+	@if [ -z "${REL}" ]; then echo "Please set REL=nnn"; exit 1; fi; \
+	if [ ! -s release/less-${REL}/less-${REL}.tar.gz ]; then echo "release/less-${REL}/less-${REL}.tar.gz does not exist"; exit 1; fi; \
+	cd release/less-${REL} && \
+	gpg -b less-${REL}.tar.gz && \
+	( echo "version: 1.2"; echo "directory: less"; echo "filename: less-${REL}.tar.gz" ) > less-${REL}.tar.gz.directive && \
+	gpg --clearsign less-${REL}.tar.gz.directive
+	@echo "upload ready: cd release/less-${REL}; ftp ftp-upload.gnu.org; cd /incoming/ftp; put less-${REL}.tar.gz less-${REL}.tar.gz.sig less-${REL}.tar.gz.directive.asc" 

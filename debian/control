@@ -6,7 +6,7 @@ XSBC-Pexip-Original-Maintainer: Milan Kupcevic <milan@debian.org>
 Build-Depends:
  debhelper (>= 12),
  libncurses-dev
-Standards-Version: 4.5.0
+Standards-Version: 4.6.2
 Vcs-Git: https://salsa.debian.org/debian/less.git
 Vcs-Browser: https://salsa.debian.org/debian/less
 Homepage: http://www.greenwoodsoftware.com/less/
@@ -17,7 +17,7 @@ Architecture: any
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
-Multi-arch: foreign
+Multi-Arch: foreign
 Description: pager program similar to more
  This package provides "less", a file pager (that is, a memory-efficient
  utility for displaying text one screenful at a time). Less has many

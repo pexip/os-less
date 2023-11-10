@@ -2,7 +2,7 @@ http://bugs.debian.org/434417
 
 --- a/main.c
 +++ b/main.c
-@@ -129,7 +129,7 @@
+@@ -132,7 +132,7 @@
  	 * act like LESS_IS_MORE is set.
  	 */
  	s = last_component(progname);
@@ -13,7 +13,7 @@ http://bugs.debian.org/434417
  	init_prompt();
 --- a/opttbl.c
 +++ b/opttbl.c
-@@ -517,7 +517,7 @@
+@@ -594,7 +594,7 @@
  	char *p;
  
  	p = lgetenv("LESS_IS_MORE");
