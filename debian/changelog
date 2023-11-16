@@ -1,3 +1,9 @@
+less (590-2pexip1) pexip-bookworm; urgency=medium
+
+  * Initial bookworm build
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Thu, 16 Nov 2023 10:05:27 +0000
+
 less (590-2) sid; urgency=medium
 
   * d/control: set standards version to 4.6.2
