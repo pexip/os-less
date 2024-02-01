@@ -1,3 +1,9 @@
+less (590-2+pexip24u3) pexip-bookworm; urgency=medium
+
+  * New versioning scheme
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Thu, 01 Feb 2024 16:03:43 +0000
+
 less (590-2pexip2) pexip-bookworm; urgency=medium
 
   * Bookworm build for product distribution
