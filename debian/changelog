@@ -1,3 +1,30 @@
+less (590-2.1~deb12u2) bookworm-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+
+  [ Milan Kupcevic ]
+  * Fix incorrect display when filename contains control chars
+    (Closes: #1069681)
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Thu, 02 May 2024 20:30:51 +0200
+
+less (590-2.1~deb12u1) bookworm-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Rebuild for bookworm-security
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Fri, 19 Apr 2024 20:58:00 +0200
+
+less (590-2.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Shell-quote filenames when invoking LESSCLOSE (CVE-2022-48624)
+    (Closes: #1064293)
+  * Fix bug when viewing a file whose name contains a newline (CVE-2024-32487)
+    (Closes: #1068938)
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Fri, 19 Apr 2024 15:09:49 +0200
+
 less (590-2) sid; urgency=medium
 
   * d/control: set standards version to 4.6.2

@@ -1,3 +1,6 @@
 less-is-more-434417.patch
 02-655926-more_can_go_backwards.patch
 End-OSC8-hyperlink-on-invalid-embedded-escape-sequen.patch
+Shell-quote-filenames-when-invoking-LESSCLOSE.patch
+Fix-bug-when-viewing-a-file-whose-name-contains-a-ne.patch
+Fix-incorrect-display-when-filename-contains-control.patch
