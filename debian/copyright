@@ -6,29 +6,52 @@ Comment:
  The previous maintainers were Darren Stalder <torin@daft.com>,
  Erick Branderhorst <branderh@debian.org> and
  Bill Mitchell <mitchell@mdd.comm.mot.com>.
-Source: http://www.greenwoodsoftware.com/less/
+Source: https://www.greenwoodsoftware.com/less/
 Upstream-Contact: Mark Nudelman <markn@greenwoodsoftware.com>
 
 Files: *
-Copyright: (C) 1984-2021  Mark Nudelman
+Copyright: (C) 1984-2024  Mark Nudelman
 License: GPL-3+ or Less
  This program is free software.  You may redistribute it and/or
  modify it under the terms of either:
  .
  1. The GNU General Public License, as published by the Free
     Software Foundation; either version 3, or (at your option) any
-    later version.  A copy of this license is in the file
-    /usr/share/common-licenses/GPL-3
+    later version.  A copy of this license is in the file COPYING.
  or
- 2. The Less License.
+ 2. The Less License, in the file LICENSE.
+
+Files: debian/*
+Copyright:
+ 2019-2025 Milan Kupcevic <milan@debian.org>
+ 2006-2016 Anibal Monsalve Salazar <anibal@debian.org>
+ 1999-2006 Thomas Schoepf <schoepf@debian.org>
+License: GPL-3+
 
 License: GPL-3+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
  You should have received a copy of the GNU General Public License
- along with the source for less; see the file COPYING.
- If not, write to the Free Software Foundation, 59 Temple Place,
- Suite 330, Boston, MA  02111-1307, USA.
+ along with this program; if not, see <http://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the complete text of the GNU General Public License
+ Version 3 can be found in `/usr/share/common-licenses/GPL-3'.
 
 License: Less
+                           Less License
+                           ------------
+ .
+ Less
+ Copyright (C) 1984-2024  Mark Nudelman
+ .
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
  are met:
@@ -51,7 +74,7 @@ License: Less
  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Files: scrsize.c
-Copyright: (C) 1984-2021  Mark Nudelman
+Copyright: (C) 1984-2024  Mark Nudelman
            (c) 1987, X Consortium
 License: GPL-3+ or Less, and X11
 
