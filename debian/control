@@ -4,9 +4,10 @@ Priority: important
 Maintainer: Pexip AS <packaging@pexip.com>
 XSBC-Pexip-Original-Maintainer: Milan Kupcevic <milan@debian.org>
 Build-Depends:
- debhelper (>= 12),
+ debhelper-compat (= 13),
  libncurses-dev
-Standards-Version: 4.6.2
+Standards-Version: 4.7.2
+Rules-Requires-Root: no
 Vcs-Git: https://salsa.debian.org/debian/less.git
 Vcs-Browser: https://salsa.debian.org/debian/less
 Homepage: http://www.greenwoodsoftware.com/less/

@@ -1,3 +1,40 @@
+less (668-1) sid; urgency=medium
+
+  * new upstream release
+    - CVE-2024-32487 fixed in v654, drop patches (#1068938, #1069681)
+    - more can go backwards (closes: #655926)
+    - fix build failure on GNU/Hurd (closes: #1060420)
+    - fix incorrect handling of UTF-8 chars in prompts (closes: #1083280)
+    - exit code 1 with LESSOPEN if stdin is /dev/null (closes: #1073071)
+    - extremely slow regex searches on very long lines (lp: #2067276)
+  * d/p/less-is-more-434417: update upstream patch status
+  * d/control: switch to debhelper 13 compatibility level
+  * d/control: comply to standards version 4.7.2
+  * d/copyright: update
+  * d/u/signing-key.asc: rearmor
+
+ -- Milan Kupcevic <milan@debian.org>  Sun, 06 Apr 2025 01:23:51 -0400
+
+less (643-1) sid; urgency=medium
+
+  * new upstream release (closes: #1069037)
+    - CVE-2022-46663 fixed in v609, drop patch
+    - CVE-2022-48624 fixed in v606, drop patch
+    - check file named "-" on stdin input (closes: #901071)
+    - integer overflow in cmd_int (closes: #977494)
+    - ctrl-c does not work with -c option (closes: #931216)
+    - at end of highlight, resend last 3 ansi sequences (closes: #1059967)
+  * update copyright notice
+  * d/watch: improve version matching
+  * drop 02-655926-more_can_go_backwards.patch, reopen #655926, tag upstream
+  * update CVE-2024-32487 patch upstream status
+  * Fix-incorrect-display-when-filename-contains-control-chars.patch:
+    new upstream patch. (closes: #1069681)
+  * refresh quilt patches
+  * override auto test target
+
+ -- Milan Kupcevic <milan@debian.org>  Wed, 01 May 2024 00:29:44 -0400
+
 less (590-2.1+pexip24u3~deb12u2) pexip; urgency=medium
 
   * New upstream release with security fixes.

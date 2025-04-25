@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2021  Mark Nudelman
+ * Copyright (C) 1984-2024  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -80,66 +80,67 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
  */
 
+#include "defines.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "lesskey.h"
 #include "cmd.h"
-#include "defines.h"
 
-char fileheader[] = {
+constant char fileheader[] = {
 	C0_LESSKEY_MAGIC, 
 	C1_LESSKEY_MAGIC, 
 	C2_LESSKEY_MAGIC, 
 	C3_LESSKEY_MAGIC
 };
-char filetrailer[] = {
+constant char filetrailer[] = {
 	C0_END_LESSKEY_MAGIC, 
 	C1_END_LESSKEY_MAGIC, 
 	C2_END_LESSKEY_MAGIC
 };
-char cmdsection[1] =    { CMD_SECTION };
-char editsection[1] =   { EDIT_SECTION };
-char varsection[1] =    { VAR_SECTION };
-char endsection[1] =    { END_SECTION };
+constant char cmdsection[1] =    { CMD_SECTION };
+constant char editsection[1] =   { EDIT_SECTION };
+constant char varsection[1] =    { VAR_SECTION };
+constant char endsection[1] =    { END_SECTION };
 
-char *infile = NULL;
-char *outfile = NULL ;
+constant char *infile = NULL;
+constant char *outfile = NULL;
 
 extern char version[];
 
-	static void
-usage(void)
+static void usage(void)
 {
 	fprintf(stderr, "usage: lesskey [-o output] [input]\n");
 	exit(1);
 }
 
-	void
-lesskey_parse_error(s)
-	char *s;
+void lesskey_parse_error(constant char *s)
 {
 	fprintf(stderr, "%s\n", s);
 }
 
-	void *
-ecalloc(count, size)
-	int count;
-	unsigned int size;
+int lstrtoi(constant char *buf, constant char **ebuf, int radix)
+{
+	return (int) strtol(buf, (char**)ebuf, radix);
+}
+
+void out_of_memory(void)
+{
+	fprintf(stderr, "lesskey: cannot allocate memory\n");
+	exit(1);
+}
+
+void * ecalloc(size_t count, size_t size)
 {
 	void *p;
 
 	p = calloc(count, size);
-	if (p != NULL)
-		return (p);
-	fprintf(stderr, "lesskey: cannot allocate %d bytes of memory\n", count*size);
-	exit(1);
+	if (p == NULL)
+		out_of_memory();
+	return (p);
 }
 
-	static char *
-mkpathname(dirname, filename)
-	char *dirname;
-	char *filename;
+static char * mkpathname(constant char *dirname, constant char *filename)
 {
 	char *pathname;
 
@@ -153,11 +154,9 @@ mkpathname(dirname, filename)
 /*
  * Figure out the name of a default file (in the user's HOME directory).
  */
-	char *
-homefile(filename)
-	char *filename;
+char * homefile(constant char *filename)
 {
-	char *p;
+	constant char *p;
 	char *pathname;
 
 	if ((p = getenv("HOME")) != NULL && *p != '\0')
@@ -177,12 +176,9 @@ homefile(filename)
 /*
  * Parse command line arguments.
  */
-	static void
-parse_args(argc, argv)
-	int argc;
-	char **argv;
+static void parse_args(int argc, constant char **argv)
 {
-	char *arg;
+	constant char *arg;
 
 	outfile = NULL;
 	while (--argc > 0)
@@ -250,11 +246,7 @@ parse_args(argc, argv)
 /*
  * Output some bytes.
  */
-	static void
-fputbytes(fd, buf, len)
-	FILE *fd;
-	char *buf;
-	int len;
+static void fputbytes(FILE *fd, constant char *buf, size_t len)
 {
 	while (len-- > 0)
 	{
@@ -266,29 +258,30 @@ fputbytes(fd, buf, len)
 /*
  * Output an integer, in special KRADIX form.
  */
-	static void
-fputint(fd, val)
-	FILE *fd;
-	unsigned int val;
+static void fputint(FILE *fd, size_t val)
 {
-	char c;
+	char c1, c2;
 
 	if (val >= KRADIX*KRADIX)
 	{
-		fprintf(stderr, "error: cannot write %d, max %d\n", 
-			val, KRADIX*KRADIX);
+		fprintf(stderr, "error: cannot write %ld, max %ld\n", 
+			(long) val, (long) (KRADIX*KRADIX));
 		exit(1);
 	}
-	c = val % KRADIX;
-	fwrite(&c, sizeof(char), 1, fd);
-	c = val / KRADIX;
-	fwrite(&c, sizeof(char), 1, fd);
+	c1 = (char) (val % KRADIX);
+	val /= KRADIX;
+	c2 = (char) (val % KRADIX);
+	val /= KRADIX;
+	if (val != 0) {
+		fprintf(stderr, "error: %ld exceeds max integer size (%ld)\n",
+			(long) val, (long) (KRADIX*KRADIX));
+		exit(1);
+	}
+	fwrite(&c1, sizeof(char), 1, fd);
+	fwrite(&c2, sizeof(char), 1, fd);
 }
 
-	int
-main(argc, argv)
-	int argc;
-	char *argv[];
+int main(int argc, constant char *argv[])
 {
 	struct lesskey_tables tables;
 	FILE *out;
@@ -301,8 +294,8 @@ main(argc, argv)
 		 * If there is no HOME environment variable,
 		 * try the concatenation of HOMEDRIVE + HOMEPATH.
 		 */
-		char *drive = getenv("HOMEDRIVE");
-		char *path  = getenv("HOMEPATH");
+		constant char *drive = getenv("HOMEDRIVE");
+		constant char *path  = getenv("HOMEPATH");
 		if (drive != NULL && path != NULL)
 		{
 			char *env = (char *) ecalloc(strlen(drive) + 
@@ -352,19 +345,20 @@ main(argc, argv)
 	/* Command key section */
 	fputbytes(out, cmdsection, sizeof(cmdsection));
 	fputint(out, tables.cmdtable.buf.end);
-	fputbytes(out, (char *)tables.cmdtable.buf.data, tables.cmdtable.buf.end);
+	fputbytes(out, xbuf_char_data(&tables.cmdtable.buf), tables.cmdtable.buf.end);
 	/* Edit key section */
 	fputbytes(out, editsection, sizeof(editsection));
 	fputint(out, tables.edittable.buf.end);
-	fputbytes(out, (char *)tables.edittable.buf.data, tables.edittable.buf.end);
+	fputbytes(out, xbuf_char_data(&tables.edittable.buf), tables.edittable.buf.end);
 
 	/* Environment variable section */
 	fputbytes(out, varsection, sizeof(varsection)); 
 	fputint(out, tables.vartable.buf.end);
-	fputbytes(out, (char *)tables.vartable.buf.data, tables.vartable.buf.end);
+	fputbytes(out, xbuf_char_data(&tables.vartable.buf), tables.vartable.buf.end);
 
 	/* File trailer */
 	fputbytes(out, endsection, sizeof(endsection));
 	fputbytes(out, filetrailer, sizeof(filetrailer));
+	fclose(out);
 	return (0);
 }

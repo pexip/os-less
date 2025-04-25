@@ -1,3 +1,3 @@
 version=4
 opts=pgpsigurlmangle=s/\.tar\.gz/.sig/ \
-https://www.greenwoodsoftware.com/less/download.html .*/less-(\d*)\.tar\.gz
+https://www.greenwoodsoftware.com/less/download.html .*/less(?:[-_]?(\d[+\.:\~\da-zA-Z]*))(?i)(?:\.(?:tar\.xz|tar\.bz2|tar\.gz|tar\.zstd?|tgz|tbz|txz))

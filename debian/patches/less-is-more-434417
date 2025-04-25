@@ -1,0 +1,32 @@
+Author: Mark Nudelman <markn@greenwoodsoftware.com>
+Description: set LESS_IS_MORE=0 to disable "more" compatibility mode
+ Setting LESS_IS_MORE=0 will disable "more" compatibility mode,
+ even if less is invoked via a file link named "more".
+Origin: upstream, https://github.com/gwsw/less/commit/8990ba6b967243774a054b154b3619b08e166675
+Bug-Debian: https://bugs.debian.org/434417
+Applied-Upstream: v669
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/main.c
++++ b/main.c
+@@ -297,7 +297,8 @@
+ 	 * If the name of the executable program is "more",
+ 	 * act like LESS_IS_MORE is set.
+ 	 */
+-	if (strcmp(last_component(progname), "more") == 0)
++	if (strcmp(last_component(progname), "more") == 0 &&
++			isnullenv(lgetenv("LESS_IS_MORE")))
+ 		less_is_more = 1;
+ 
+ 	init_prompt();
+--- a/opttbl.c
++++ b/opttbl.c
+@@ -748,7 +748,7 @@
+ 	constant char *p;
+ 
+ 	p = lgetenv("LESS_IS_MORE");
+-	if (!isnullenv(p))
++	if (!isnullenv(p) && !(p[0] == '0' && p[1] == '\0'))
+ 		less_is_more = 1;
+ 
+ 	for (o = option;  o->oletter != '\0';  o++)
