@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2021  Mark Nudelman
+ * Copyright (C) 1984-2024  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -7,26 +7,29 @@
  * For more information, see the README file.
  */
 
+#include "defines.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "lesskey.h"
 #include "cmd.h"
 #include "xbuf.h"
-#include "defines.h"
 
 #define CONTROL(c)      ((c)&037)
 #define ESC             CONTROL('[')
 
 extern void lesskey_parse_error(char *msg);
 extern char *homefile(char *filename);
-extern void *ecalloc(int count, unsigned int size);
+extern void *ecalloc(size_t count, size_t size);
+extern int lstrtoi(char *str, char **end, int radix);
+extern char version[];
 
 static int linenum;
 static int errors;
-static char *lesskey_file;
+static int less_version = 0;
+static char *lesskey_file = NULL;
 
-static struct lesskey_cmdname cmdnames[] = 
+static constant struct lesskey_cmdname cmdnames[] = 
 {
 	{ "back-bracket",         A_B_BRACKET },
 	{ "back-line",            A_B_LINE },
@@ -36,6 +39,7 @@ static struct lesskey_cmdname cmdnames[] =
 	{ "back-search",          A_B_SEARCH },
 	{ "back-window",          A_B_WINDOW },
 	{ "clear-mark",           A_CLRMARK },
+	{ "clear-search",         A_CLR_SEARCH },
 	{ "debug",                A_DEBUG },
 	{ "digit",                A_DIGIT },
 	{ "display-flag",         A_DISP_OPTION },
@@ -49,13 +53,13 @@ static struct lesskey_cmdname cmdnames[] =
 	{ "flush-repaint",        A_FREPAINT },
 	{ "forw-bracket",         A_F_BRACKET },
 	{ "forw-forever",         A_F_FOREVER },
-	{ "forw-until-hilite",    A_F_UNTIL_HILITE },
 	{ "forw-line",            A_F_LINE },
 	{ "forw-line-force",      A_FF_LINE },
 	{ "forw-screen",          A_F_SCREEN },
 	{ "forw-screen-force",    A_FF_SCREEN },
 	{ "forw-scroll",          A_F_SCROLL },
 	{ "forw-search",          A_F_SEARCH },
+	{ "forw-until-hilite",    A_F_UNTIL_HILITE },
 	{ "forw-window",          A_F_WINDOW },
 	{ "goto-end",             A_GOEND },
 	{ "goto-end-buffered",    A_GOEND_BUF },
@@ -67,12 +71,16 @@ static struct lesskey_cmdname cmdnames[] =
 	{ "left-scroll",          A_LSHIFT },
 	{ "next-file",            A_NEXT_FILE },
 	{ "next-tag",             A_NEXT_TAG },
-	{ "noaction",             A_NOACTION },
 	{ "no-scroll",            A_LLSHIFT },
+	{ "noaction",             A_NOACTION },
+	{ "osc8-forw-search",     A_OSC8_F_SEARCH },
+	{ "osc8-back-search",     A_OSC8_B_SEARCH },
+	{ "osc8-open",            A_OSC8_OPEN },
 	{ "percent",              A_PERCENT },
 	{ "pipe",                 A_PIPE },
 	{ "prev-file",            A_PREV_FILE },
 	{ "prev-tag",             A_PREV_TAG },
+	{ "pshell",               A_PSHELL },
 	{ "quit",                 A_QUIT },
 	{ "remove-file",          A_REMOVE_FILE },
 	{ "repaint",              A_REPAINT },
@@ -89,13 +97,12 @@ static struct lesskey_cmdname cmdnames[] =
 	{ "toggle-flag",          A_OPT_TOGGLE },
 	{ "toggle-option",        A_OPT_TOGGLE },
 	{ "undo-hilite",          A_UNDO_SEARCH },
-	{ "clear-search",         A_CLR_SEARCH },
 	{ "version",              A_VERSION },
 	{ "visual",               A_VISUAL },
 	{ NULL,   0 }
 };
 
-static struct lesskey_cmdname editnames[] = 
+static constant struct lesskey_cmdname editnames[] = 
 {
 	{ "back-complete",      EC_B_COMPLETE },
 	{ "backspace",          EC_BACKSPACE },
@@ -123,23 +130,24 @@ static struct lesskey_cmdname editnames[] =
 /*
  * Print a parse error message.
  */
-	static void
-parse_error(s1, s2)
-	char *s1;
-	char *s2;
+static void parse_error(constant char *fmt, constant char *arg1)
 {
 	char buf[1024];
+	int n = SNPRINTF2(buf, sizeof(buf), "%s: line %d: ", lesskey_file, linenum);
+	if (n >= 0)
+	{
+		size_t len = (size_t) n;
+		if (len < sizeof(buf))
+			SNPRINTF1(buf+len, sizeof(buf)-len, fmt, arg1);
+	}
 	++errors;
-	snprintf(buf, sizeof(buf), "%s: line %d: %s%s", lesskey_file, linenum, s1, s2);
 	lesskey_parse_error(buf);
 }
 
 /*
  * Initialize lesskey_tables.
  */
-	static void
-init_tables(tables)
-	struct lesskey_tables *tables;
+static void init_tables(struct lesskey_tables *tables)
 {
 	tables->currtable = &tables->cmdtable;
 
@@ -156,18 +164,40 @@ init_tables(tables)
 	xbuf_init(&tables->vartable.buf);
 }
 
+#define CHAR_STRING_LEN 8
+
+static constant char * char_string(char *buf, char ch, int lit)
+{
+	if (lit || (ch >= 0x20 && ch < 0x7f))
+	{
+		buf[0] = ch;
+		buf[1] = '\0';
+	} else
+	{
+		SNPRINTF1(buf, CHAR_STRING_LEN, "\\x%02x", ch);
+	}
+	return buf;
+}
+
+/*
+ * Increment char pointer by one up to terminating nul byte.
+ */
+static char * increment_pointer(char *p)
+{
+	if (*p == '\0')
+		return p;
+	return p+1;
+}
+
 /*
  * Parse one character of a string.
  */
-	static char *
-tstr(pp, xlate)
-	char **pp;
-	int xlate;
+static constant char * tstr(char **pp, int xlate)
 {
 	char *p;
 	char ch;
 	int i;
-	static char buf[10];
+	static char buf[CHAR_STRING_LEN];
 	static char tstr_control_k[] =
 		{ SK_SPECIAL_KEY, SK_CONTROL_K, 6, 1, 1, 1, '\0' };
 
@@ -186,22 +216,18 @@ tstr(pp, xlate)
 			ch = 0;
 			i = 0;
 			do
-				ch = 8*ch + (*p - '0');
+				ch = (char) (8*ch + (*p - '0'));
 			while (*++p >= '0' && *p <= '7' && ++i < 3);
 			*pp = p;
 			if (xlate && ch == CONTROL('K'))
 				return tstr_control_k;
-			buf[0] = ch;
-			buf[1] = '\0';
-			return (buf);
+			return char_string(buf, ch, 1);
 		case 'b':
 			*pp = p+1;
 			return ("\b");
 		case 'e':
 			*pp = p+1;
-			buf[0] = ESC;
-			buf[1] = '\0';
-			return (buf);
+			return char_string(buf, ESC, 1);
 		case 'n':
 			*pp = p+1;
 			return ("\n");
@@ -216,19 +242,27 @@ tstr(pp, xlate)
 			{
 				switch (*++p)
 				{
-				case 'u': ch = SK_UP_ARROW; break;
+				case 'b': ch = SK_BACKSPACE; break;
+				case 'B': ch = SK_CTL_BACKSPACE; break;
 				case 'd': ch = SK_DOWN_ARROW; break;
-				case 'r': ch = SK_RIGHT_ARROW; break;
-				case 'l': ch = SK_LEFT_ARROW; break;
-				case 'U': ch = SK_PAGE_UP; break;
 				case 'D': ch = SK_PAGE_DOWN; break;
-				case 'h': ch = SK_HOME; break;
 				case 'e': ch = SK_END; break;
+				case 'h': ch = SK_HOME; break;
+				case 'i': ch = SK_INSERT; break;
+				case 'l': ch = SK_LEFT_ARROW; break;
+				case 'L': ch = SK_CTL_LEFT_ARROW; break;
+				case 'r': ch = SK_RIGHT_ARROW; break;
+				case 'R': ch = SK_CTL_RIGHT_ARROW; break;
+				case 't': ch = SK_BACKTAB; break;
+				case 'u': ch = SK_UP_ARROW; break;
+				case 'U': ch = SK_PAGE_UP; break;
 				case 'x': ch = SK_DELETE; break;
-				default: { char buf[2]; buf[0] = *p; buf[1] = '\0';
-					parse_error("illegal escape sequence \\k", buf);
-					*pp = p+1;
-					return (""); }
+				case 'X': ch = SK_CTL_DELETE; break;
+				case '1': ch = SK_F1; break;
+				default:
+					parse_error("invalid escape sequence \"\\k%s\"", char_string(buf, *p, 0));
+					*pp = increment_pointer(p);
+					return ("");
 				}
 				*pp = p+1;
 				buf[0] = SK_SPECIAL_KEY;
@@ -246,9 +280,8 @@ tstr(pp, xlate)
 			 * Backslash followed by any other char 
 			 * just means that char.
 			 */
-			*pp = p+1;
-			buf[0] = *p;
-			buf[1] = '\0';
+			*pp = increment_pointer(p);
+			char_string(buf, *p, 1);
 			if (xlate && buf[0] == CONTROL('K'))
 				return tstr_control_k;
 			return (buf);
@@ -257,24 +290,20 @@ tstr(pp, xlate)
 		/*
 		 * Caret means CONTROL.
 		 */
-		*pp = p+2;
-		buf[0] = CONTROL(p[1]);
-		buf[1] = '\0';
+		*pp = increment_pointer(p+1);
+		char_string(buf, CONTROL(p[1]), 1);
 		if (xlate && buf[0] == CONTROL('K'))
 			return tstr_control_k;
 		return (buf);
 	}
-	*pp = p+1;
-	buf[0] = *p;
-	buf[1] = '\0';
+	*pp = increment_pointer(p);
+	char_string(buf, *p, 1);
 	if (xlate && buf[0] == CONTROL('K'))
 		return tstr_control_k;
 	return (buf);
 }
 
-	static int
-issp(ch)
-	char ch;
+static int issp(char ch)
 {
 	return (ch == ' ' || ch == '\t');
 }
@@ -282,9 +311,7 @@ issp(ch)
 /*
  * Skip leading spaces in a string.
  */
-	static char *
-skipsp(s)
-	char *s;
+static char * skipsp(char *s)
 {
 	while (issp(*s))
 		s++;
@@ -294,9 +321,7 @@ skipsp(s)
 /*
  * Skip non-space characters in a string.
  */
-	static char *
-skipnsp(s)
-	char *s;
+static char * skipnsp(char *s)
 {
 	while (*s != '\0' && !issp(*s))
 		s++;
@@ -307,9 +332,7 @@ skipnsp(s)
  * Clean up an input line:
  * strip off the trailing newline & any trailing # comment.
  */
-	static char *
-clean_line(s)
-	char *s;
+static char * clean_line(char *s)
 {
 	int i;
 
@@ -324,74 +347,127 @@ clean_line(s)
 /*
  * Add a byte to the output command table.
  */
-	static void
-add_cmd_char(c, tables)
-	int c;
-	struct lesskey_tables *tables;
+static void add_cmd_char(unsigned char c, struct lesskey_tables *tables)
 {
-	xbuf_add(&tables->currtable->buf, c);
+	xbuf_add_byte(&tables->currtable->buf, c);
+}
+
+static void erase_cmd_char(struct lesskey_tables *tables)
+{
+	xbuf_pop(&tables->currtable->buf);
 }
 
 /*
  * Add a string to the output command table.
  */
-	static void
-add_cmd_str(s, tables)
-	char *s;
-	struct lesskey_tables *tables;
+static void add_cmd_str(constant char *s, struct lesskey_tables *tables)
 {
 	for ( ;  *s != '\0';  s++)
-		add_cmd_char(*s, tables);
+		add_cmd_char((unsigned char) *s, tables);
+}
+
+/*
+ * Does a given version number match the running version?
+ * Operator compares the running version to the given version.
+ */
+static int match_version(char op, int ver)
+{
+	switch (op)
+	{
+	case '>': return less_version > ver;
+	case '<': return less_version < ver;
+	case '+': return less_version >= ver;
+	case '-': return less_version <= ver;
+	case '=': return less_version == ver;
+	case '!': return less_version != ver;
+	default: return 0; /* cannot happen */
+	}
+}
+
+/*
+ * Handle a #version line.
+ * If the version matches, return the part of the line that should be executed.
+ * Otherwise, return NULL.
+ */
+static char * version_line(char *s)
+{
+	char op;
+	int ver;
+	char *e;
+	char buf[CHAR_STRING_LEN];
+
+	s += strlen("#version");
+	s = skipsp(s);
+	op = *s++;
+	/* Simplify 2-char op to one char. */
+	switch (op)
+	{
+	case '<': if (*s == '=') { s++; op = '-'; } break;
+	case '>': if (*s == '=') { s++; op = '+'; } break;
+	case '=': if (*s == '=') { s++; } break;
+	case '!': if (*s == '=') { s++; } break;
+	default: 
+		parse_error("invalid operator '%s' in #version line", char_string(buf, op, 0));
+		return (NULL);
+	}
+	s = skipsp(s);
+	ver = lstrtoi(s, &e, 10);
+	if (e == s)
+	{
+		parse_error("non-numeric version number in #version line", "");
+		return (NULL);
+	}
+	if (!match_version(op, ver))
+		return (NULL);
+	return (e);
 }
 
 /*
  * See if we have a special "control" line.
  */
-	static int
-control_line(s, tables)
-	char *s;
-	struct lesskey_tables *tables;
+static char * control_line(char *s, struct lesskey_tables *tables)
 {
 #define PREFIX(str,pat) (strncmp(str,pat,strlen(pat)) == 0)
 
 	if (PREFIX(s, "#line-edit"))
 	{
 		tables->currtable = &tables->edittable;
-		return (1);
+		return (NULL);
 	}
 	if (PREFIX(s, "#command"))
 	{
 		tables->currtable = &tables->cmdtable;
-		return (1);
+		return (NULL);
 	}
 	if (PREFIX(s, "#env"))
 	{
 		tables->currtable = &tables->vartable;
-		return (1);
+		return (NULL);
 	}
 	if (PREFIX(s, "#stop"))
 	{
 		add_cmd_char('\0', tables);
 		add_cmd_char(A_END_LIST, tables);
-		return (1);
+		return (NULL);
 	}
-	return (0);
+	if (PREFIX(s, "#version"))
+	{
+		return (version_line(s));
+	}
+	return (s);
 }
 
 /*
  * Find an action, given the name of the action.
  */
-	static int
-findaction(actname, tables)
-	char *actname;
-	struct lesskey_tables *tables;
+static int findaction(char *actname, struct lesskey_tables *tables)
 {
 	int i;
 
 	for (i = 0;  tables->currtable->names[i].cn_name != NULL;  i++)
 		if (strcmp(tables->currtable->names[i].cn_name, actname) == 0)
 			return (tables->currtable->names[i].cn_action);
-	parse_error("unknown action: ", actname);
+	parse_error("unknown action: \"%s\"", actname);
 	return (A_INVALID);
 }
 
@@ -402,14 +478,11 @@ findaction(actname, tables)
  * resulting less action, and EXTRA is an "extra" user
  * key sequence injected after the action.
  */
-	static void
-parse_cmdline(p, tables)
-	char *p;
-	struct lesskey_tables *tables;
+static void parse_cmdline(char *p, struct lesskey_tables *tables)
 {
 	char *actname;
 	int action;
-	char *s;
+	constant char *s;
 	char c;
 
 	/*
@@ -453,14 +526,14 @@ parse_cmdline(p, tables)
 	p = skipsp(p);
 	if (*p == '\0')
 	{
-		add_cmd_char(action, tables);
+		add_cmd_char((unsigned char) action, tables);
 	} else
 	{
 		/*
 		 * OR the special value A_EXTRA into the action byte.
 		 * Put the extra string after the action byte.
 		 */
-		add_cmd_char(action | A_EXTRA, tables);
+		add_cmd_char((unsigned char) (action | A_EXTRA), tables);
 		while (*p != '\0')
 			add_cmd_str(tstr(&p, 0), tables);
 		add_cmd_char('\0', tables);
@@ -471,33 +544,41 @@ parse_cmdline(p, tables)
  * Parse a variable definition line, of the form
  *  NAME = VALUE
  */
-	static void
-parse_varline(line, tables)
-	char *line;
-	struct lesskey_tables *tables;
+static void parse_varline(char *line, struct lesskey_tables *tables)
 {
-	char *s;
+	constant char *s;
 	char *p = line;
+	char *eq;
 
-	do
+	eq = strchr(line, '=');
+	if (eq != NULL && eq > line && eq[-1] == '+')
 	{
-		s = tstr(&p, 0);
-		add_cmd_str(s, tables);
-	} while (*p != '\0' && !issp(*p) && *p != '=');
-	/*
-	 * Terminate the variable name with a null byte.
-	 */
-	add_cmd_char('\0', tables);
-
-	p = skipsp(p);
-	if (*p++ != '=')
+		/*
+		 * Rather ugly way of handling a += line.
+		 * {{ Note that we ignore the variable name and 
+		 *    just append to the previously defined variable. }}
+		 */
+		erase_cmd_char(tables); /* backspace over the final null */
+		p = eq+1;
+	} else
 	{
-		parse_error("missing = in: ", line);
-		return;
+		do
+		{
+			s = tstr(&p, 0);
+			add_cmd_str(s, tables);
+		} while (*p != '\0' && !issp(*p) && *p != '=');
+		/*
+		 * Terminate the variable name with a null byte.
+		 */
+		add_cmd_char('\0', tables);
+		p = skipsp(p);
+		if (*p++ != '=')
+		{
+			parse_error("missing = in variable definition", "");
+			return;
+		}
+		add_cmd_char(EV_OK|A_EXTRA, tables);
 	}
-
-	add_cmd_char(EV_OK|A_EXTRA, tables);
-
 	p = skipsp(p);
 	while (*p != '\0')
 	{
@@ -510,24 +591,22 @@ parse_varline(line, tables)
 /*
  * Parse a line from the lesskey file.
  */
-	static void
-parse_line(line, tables)
-	char *line;
-	struct lesskey_tables *tables;
+static void parse_line(char *line, struct lesskey_tables *tables)
 {
 	char *p;
 
 	/*
 	 * See if it is a control line.
 	 */
-	if (control_line(line, tables))
+	p = control_line(line, tables);
+	if (p == NULL)
 		return;
 	/*
 	 * Skip leading white space.
 	 * Replace the final newline with a null byte.
 	 * Ignore blank lines and comments.
 	 */
-	p = clean_line(line);
+	p = clean_line(p);
 	if (*p == '\0')
 		return;
 
@@ -540,41 +619,81 @@ parse_line(line, tables)
 /*
  * Parse a lesskey source file and store result in tables.
  */
-	int
-parse_lesskey(infile, tables)
-	char *infile;
-	struct lesskey_tables *tables;
+int parse_lesskey(constant char *infile, struct lesskey_tables *tables)
 {
 	FILE *desc;
 	char line[1024];
 
-	if (infile == NULL)
-		infile = homefile(DEF_LESSKEYINFILE);
-	lesskey_file = infile;
+	lesskey_file = (infile != NULL) ? strdup(infile) : homefile(DEF_LESSKEYINFILE);
+	if (lesskey_file == NULL)
+		return (-1);
 
 	init_tables(tables);
 	errors = 0;
 	linenum = 0;
+	if (less_version == 0)
+		less_version = lstrtoi(version, NULL, 10);
 
 	/*
 	 * Open the input file.
 	 */
-	if (strcmp(infile, "-") == 0)
+	if (strcmp(lesskey_file, "-") == 0)
 		desc = stdin;
-	else if ((desc = fopen(infile, "r")) == NULL)
+	else if ((desc = fopen(lesskey_file, "r")) == NULL)
 	{
-		/* parse_error("cannot open lesskey file ", infile); */
-		return (-1);
+		/* parse_error("cannot open lesskey file %s", lesskey_file); */
+		errors = -1;
 	}
 
 	/*
 	 * Read and parse the input file, one line at a time.
 	 */
-	while (fgets(line, sizeof(line), desc) != NULL)
+	if (desc != NULL)
 	{
+		while (fgets(line, sizeof(line), desc) != NULL)
+		{
+			++linenum;
+			parse_line(line, tables);
+		}
+		if (desc != stdin)
+			fclose(desc);
+	}
+	free(lesskey_file);
+	lesskey_file = NULL;
+	return (errors);
+}
+
+/*
+ * Parse a lesskey source content and store result in tables.
+ */
+int parse_lesskey_content(constant char *content, struct lesskey_tables *tables)
+{
+	size_t cx = 0;
+
+	lesskey_file = "lesskey-content";
+	init_tables(tables);
+	errors = 0;
+	linenum = 0;
+	if (less_version == 0)
+		less_version = lstrtoi(version, NULL, 10);
+
+	while (content[cx] != '\0')
+	{
+		/* Extract a line from the content buffer and parse it. */
+		char line[1024];
+		size_t lx = 0;
+		while (content[cx] != '\0' && content[cx] != '\n' && content[cx] != ';')
+		{
+			if (lx >= sizeof(line)-1) break;
+			if (content[cx] == '\\' && content[cx+1] == ';')
+				++cx; /* escaped semicolon: skip the backslash */
+			line[lx++] = content[cx++];
+		}
+		line[lx] = '\0';
 		++linenum;
 		parse_line(line, tables);
+		if (content[cx] != '\0') ++cx; /* skip newline or semicolon */
 	}
-
+	lesskey_file = NULL;
 	return (errors);
 }
